@@ -29,6 +29,21 @@ router.post('/', (req, res) => {
     });
   });
 
+    //add Books to list
+
+router.post('/:id/books',(req,res)=>{
+  console.log(req.body)
+  db.List.findByIdAndUpdate(    
+    req.params.id,
+    {$addToSet :{books:req.body.books}},
+    {new:true},
+    (err,updatedList)=>{
+      if(err) return console.log(err)
+      res.json(updatedList)
+    }
+    )    
+})
+
 
 //update route --> update a List
 router.put('/:id', (req, res) => {
@@ -42,6 +57,7 @@ router.put('/:id', (req, res) => {
         res.json(updatedList);
       });
   });
+
 
 
 
