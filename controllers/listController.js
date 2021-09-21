@@ -46,7 +46,7 @@ router.post("/:id/books", (req, res) => {
 router.put("/:id", (req, res) => {
   db.List.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    {$set:req.body},
     { new: true },
     (err, updatedList) => {
       if (err) return console.log(err);
@@ -74,6 +74,7 @@ router.delete("/:listId/works/:bookId", (req, res) => {
     db.List.findByIdAndUpdate(
       req.params.listId,
       { $set: { books: foundList.books } },
+      {new:true},
       (err, updatedList) => {
         if (err) return console.log(err);
         res.json(updatedList);
