@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const ListSchema = new Schema({
   title: String,
   description: String,
   picture: String,
-  books: []
+  books: [],
 });
 
-const List = mongoose.model('List', ListSchema);
+const List = mongoose.model("List", ListSchema);
 
 module.exports = List;
