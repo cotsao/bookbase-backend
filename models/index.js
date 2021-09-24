@@ -19,4 +19,5 @@ mongoose
 //export to controller
 module.exports = {
   List: require("./List"),
+  User: require("./User")
 };

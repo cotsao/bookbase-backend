@@ -2,11 +2,16 @@ const router = require("express").Router();
 const db = require("../models");
 
 //index route --> return data for all cities
-router.get("/", (req, res) => {
-  db.List.find({}, (err, foundList) => {
-    if (err) return console.log(err);
-    res.json(foundList);
-  });
+router.get("/", async (req, res) => {
+  try {
+    const user = await db.User.findOne({ auth0Id: req.user.sub });
+    const list = user.userLists;
+
+    res.json(list);
+  } catch (err) {
+    console.log(err);
+    res.json({ msg: "Something went wrong!" });
+  }
 });
 
 //show route --> data for one List
@@ -18,13 +23,21 @@ router.get("/:id", (req, res) => {
 });
 
 //post route --> create a List
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   console.log("you hit the post route");
-  db.List.create(req.body, (err, createdList) => {
+  const newList = await db.List.create(req.body.newList);
+  
+  await db.User.findOneAndUpdate(
+    { auth0Id: req.body.auth0ID },
+    { $addToSet: { userLists: newList } },
+    { new: true }
+  );
+  res.json({ msg: "whoops" });
+  /* db.List.create(req.body, (err, createdList) => {
     if (err) return console.log(err);
     console.log(req.body);
     res.json(createdList);
-  });
+  }); */
 });
 
 //add Books to list
@@ -46,7 +59,7 @@ router.post("/:id/books", (req, res) => {
 router.put("/:id", (req, res) => {
   db.List.findByIdAndUpdate(
     req.params.id,
-    {$set:req.body},
+    { $set: req.body },
     { new: true },
     (err, updatedList) => {
       if (err) return console.log(err);
@@ -57,11 +70,26 @@ router.put("/:id", (req, res) => {
 });
 
 //delete route --> delete a List
-router.delete("/:id", (req, res) => {
-  db.List.findByIdAndDelete(req.params.id, (err, deletedList) => {
-    if (err) return console.log(err);
-    res.json("We deleted this");
-  });
+router.delete("/:id", async (req, res) => {
+  
+  const id = req.body.auth0ID
+  console.log(id)
+  try {
+    /* await db.List.findByIdAndDelete(req.params.id);
+    console.log(deletedlist) */
+    const user = await db.User.findOne({ auth0Id: id });
+    const deletedBookIndex = user.userLists.findIndex(
+      (list) => (list._id.toString() === req.params.id)
+    );
+    await db.User.findOneAndUpdate(
+      { auth0Id: id },
+      { $set: { userLists: user.userLists.splice(deletedBookIndex, 1) } },
+      { new: true }
+    );
+    res.json("delete successful");
+  } catch (error) {
+    console.log(error);
+  }
 });
 /* ------------------------------- delete book ------------------------------ */
 router.delete("/:listId/works/:bookId", (req, res) => {
@@ -74,7 +102,7 @@ router.delete("/:listId/works/:bookId", (req, res) => {
     db.List.findByIdAndUpdate(
       req.params.listId,
       { $set: { books: foundList.books } },
-      {new:true},
+      { new: true },
       (err, updatedList) => {
         if (err) return console.log(err);
         res.json(updatedList);
