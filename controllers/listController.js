@@ -49,7 +49,7 @@ router.post("/:id/books", async (req, res) => {
       (list) => list._id.toString() === req.params.id
     );
     let updatedList = user.userLists[listToUpdateIndex].books;
-    if (updatedList.includes(req.body.books) ===false) {
+    if (updatedList.includes(req.body.books) === false) {
       updatedList.push(req.body.books);
     }
 
@@ -76,8 +76,27 @@ router.post("/:id/books", async (req, res) => {
 });
 
 //update route --> update a List
-router.put("/:id", (req, res) => {
-  db.List.findByIdAndUpdate(
+router.put("/:id", async (req, res) => {
+  const id = req.body.auth0ID;
+  const toUpdate = req.body.updatedList;
+  try {
+    const updatedList = await db.List.findByIdAndUpdate(
+      req.params.id,
+      { $set: toUpdate },
+      { new: true }
+    );
+
+    await db.User.findOneAndUpdate(
+      { auth0Id: id },
+      { $set: { userLists: toUpdate } },
+      { new: true }
+    );
+    res.json(updatedList)
+  } catch (error) {
+    console.log(error);
+  }
+
+  /* db.List.findByIdAndUpdate(
     req.params.id,
     { $set: req.body },
     { new: true },
@@ -86,7 +105,7 @@ router.put("/:id", (req, res) => {
 
       res.json(updatedList);
     }
-  );
+  ); */
 });
 
 //delete route --> delete a List
@@ -96,15 +115,15 @@ router.delete("/:id", async (req, res) => {
   try {
     await db.List.findByIdAndDelete(req.params.id);
 
-
     const user = await db.User.findOne({ auth0Id: id });
     const deletedListIndex = user.userLists.findIndex(
       (list) => list._id.toString() === req.params.id
     );
-    let removed =user.userLists.splice(deletedListIndex, 1)    
+
+    user.userLists.splice(deletedListIndex, 1);
     await db.User.findOneAndUpdate(
       { auth0Id: id },
-      { $set: { userLists:  removed} },
+      { $set: { userLists: user.userLists } },
       { new: true }
     );
     res.json("delete successful");
@@ -113,31 +132,31 @@ router.delete("/:id", async (req, res) => {
   }
 });
 /* ------------------------------- delete book ------------------------------ */
-router.delete("/:listId/works/:bookId", async(req, res) => {
-  const id = req.body.auth0ID
-  try{
-    const listToUpdate = await db.List.findById(req.params.listId)
+router.delete("/:listId/works/:bookId", async (req, res) => {
+  const id = req.body.auth0ID;
+  try {
+    const listToUpdate = await db.List.findById(req.params.listId);
     const bookIndex = listToUpdate.books.findIndex(
       (book) => book === `/works/${req.params.bookId}`
     );
-    listToUpdate.books.splice(bookIndex, 1)
-    console.log(listToUpdate)
+    listToUpdate.books.splice(bookIndex, 1);
+    console.log(listToUpdate);
     const finalUpdatedList = await db.List.findByIdAndUpdate(
       req.params.listId,
-      { $set:{books:listToUpdate.books}},
-      {new:true}
-    )
-    await db.User.findOneAndUpdate(
-      { auth0Id: id },
-      { $set: { userLists:  listToUpdate} },
+      { $set: { books: listToUpdate.books } },
       { new: true }
     );
-    res.json(finalUpdatedList)
-  } catch(error){
-    console.log(error)
+    await db.User.findOneAndUpdate(
+      { auth0Id: id },
+      { $set: { userLists: listToUpdate } },
+      { new: true }
+    );
+    res.json(finalUpdatedList);
+  } catch (error) {
+    console.log(error);
   }
-  
-/*   db.List.findById(req.params.listId, (err, foundList) => {
+
+  /*   db.List.findById(req.params.listId, (err, foundList) => {
     if (err) return console.log(err);
     const bookIndex = foundList.books.findIndex(
       (book) => book === `/works/${req.params.bookId}`
