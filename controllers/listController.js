@@ -24,26 +24,29 @@ router.get("/:id", (req, res) => {
 
 //post route --> create a List for specified user
 router.post("/", async (req, res) => {
-  const newList = await db.List.create(req.body.newList);
+  try {
+    const newList = await db.List.create(req.body.newList);
 
-  await db.User.findOneAndUpdate(
-    { auth0Id: req.body.auth0ID },
-    { $addToSet: { userLists: newList } },
-    { new: true }
-  );
-  res.json({ msg: "whoops" });
+    await db.User.findOneAndUpdate(
+      { auth0Id: req.body.auth0ID },
+      { $addToSet: { userLists: newList } },
+      { new: true }
+    );
+    res.json({ msg: "whoops" });
+  } catch (error) {}
 });
 
 //add Books to list
 
 router.post("/:id/books", async (req, res) => {
   const id = req.body.auth0ID;
-  await db.List.findByIdAndUpdate(
-    req.params.id,
-    { $addToSet: { books: req.body.books } },
-    { new: true }
-  );
+
   try {
+    await db.List.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { books: req.body.books } },
+      { new: true }
+    );
     const user = await db.User.findOne({ auth0ID: id });
     const listToUpdateIndex = user.userLists.findIndex(
       (list) => list._id.toString() === req.params.id
@@ -85,13 +88,17 @@ router.put("/:id", async (req, res) => {
       { $set: toUpdate },
       { new: true }
     );
-
+    user = await db.User.findOne({ auth0Id: id })
+    const listToUpdateIndex = user.userLists.findIndex(
+      (list) => list._id.toString() === req.params.id
+    );
+    user.userLists[listToUpdateIndex] = toUpdate
     await db.User.findOneAndUpdate(
       { auth0Id: id },
-      { $set: { userLists: toUpdate } },
+      { $set: { userLists: user.userLists } },
       { new: true }
     );
-    res.json(updatedList)
+    res.json(updatedList);
   } catch (error) {
     console.log(error);
   }
