@@ -8,7 +8,7 @@ var jwtCheck = jwt({
         jwksRequestsPerMinute: 5,
         jwksUri: 'https://dev-d5iqohfm.us.auth0.com/.well-known/jwks.json'
   }),
-  audience: 'http://localhost:8000',
+  audience: 'https://sei706-bookbase.herokuapp.com/',
   issuer: 'https://dev-d5iqohfm.us.auth0.com/',
   algorithms: ['RS256']
 });

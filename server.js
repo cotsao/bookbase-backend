@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+require('dotenv').config()
 const listController = require("./controllers/listController");
 const authController = require("./controllers/authController")
 const publicController = require('./controllers/publicController')
