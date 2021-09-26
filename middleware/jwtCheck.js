@@ -12,5 +12,5 @@ var jwtCheck = jwt({
   issuer: 'https://dev-d5iqohfm.us.auth0.com/',
   algorithms: ['RS256']
 });
-
+ 
 module.exports = jwtCheck
